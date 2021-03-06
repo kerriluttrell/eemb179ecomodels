@@ -1,0 +1,116 @@
+---
+title: "EEMB179_homework_1"
+author: "Kerri Luttrell"
+date: "1/7/2021"
+output: html_document
+
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Homework exercise
+
+1A. Use the : or `c()` or `seq()` function to create a vector of numbers that ranges from 1 to 10. (1 pt)
+1B. Name the vector "vector.1" using variable assignment. (1 pt)
+1C. Print the vector. (1 pt)
+```{r}
+vector.1<- seq(from=1, to=10, by=1)
+vector.1
+```
+
+2A. Use the `rep()` function to create a holding vector for a `for()` loop populated with NaN. Make this vector the same length as vector.1 from #1 (a length of 10). (1 pt)
+2B. Name the vector "vector.2" using variable assignment. (1 pt)
+2C. Print the vector. (1 pt)
+```{r}
+vector.2<- rep(NaN, times=length(vector.1))
+vector.2
+```
+
+3. Write in words what each line of code means. Some lines have been annotated for you. (5 pts)
+```{r}
+vector.1 <- 1:10 
+# store the vector (1,2,3,4,5,6,7,8,9,10) in the object vector.1
+
+vector.1 
+# print the object vector.1
+
+vector.2 <- rep(NaN, times = length(vector.1)) 
+# store in the object vector.2, fill vector.2 with Not a Number repeatedly until it is the same length as vector.1
+
+for(i in 1:length(vector.1)) { 
+  vector.2[i] <- vector.1[i] + 1 
+}
+# for every value in vector.2 replace it with the equivalent place value in vector.1 plus one.
+
+vector.2 
+# print vector.2
+```
+
+4. In #3 you used the letter 'i' to denote each variable in vector.1 and vector.2. If you replaced 'i' with 'j', would anything change about your output? Please explain your answer in the space below. (2 pts)
+
+Yes. The for loop would not run and the values for vector.2, which we can see in the Environment, would not change from NaN. Thus, the output for when you print vector.2 would remain [ ] NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN instead of changing to [ ] 2 3 4 5 6 7 8 9 10 11.
+
+
+5. We will use a `for()` loop to iterate over a vector and solve for variable 'y' using the `y = mx + b` equation. Please follow the prompts below. Some prompts have been completed for you. (8 pts)
+```{r}
+# Use variable assignment to assign 10 as b and 1 as m
+b <- 10
+m <- 1
+
+# Create a vector that ranges from 1 to 100 and name it 'x' using variable assignment. (2 pts)
+##############
+x<- (1:100)
+
+
+######################################
+
+# Create a holding vector for 'y' using the rep() function that is of the same length as vector x, but populate this vector with NaN. (2 pts)
+##############
+
+y<- rep(NaN, times= length(x)) 
+
+
+######################################
+
+# Write out what each line below means in words:
+for (i in 1:length(x)) { # for the variables in x (1pt)
+  y[i] <- m * x[i] + b # replace the ith value of y with m times the ith value of x plus b (1pt)
+}
+
+# Print y (1 pt)
+####### #######
+
+y
+
+######################################
+
+# Use the plot function to plot y as a function of x 
+plot(y~x)
+```
+
+6. Write a `for()` loop to 1) take the square root and then 2) add 2 for each value in a vector. 
+```{r}
+# vector of values
+fibseq <- c(0, 1, 1, 2, 3, 5, 8, 13, 21, 34)
+length(fibseq)
+# create a holding vector (1 pt)
+
+holding<- rep(NaN, times=length(fibseq))
+length(holding)
+
+# write a for() loop (2 pts)
+####### WRITE YOUR FOR() LOOP HERE ########
+
+for (i in 1:length(fibseq)) { # for the variables in fitbseq (1pt)
+  holding[i] <- sqrt(fibseq[i]) +2 # replace the ith value of y with m times the ith value of x plus b (1pt)
+}
+
+###########################################
+
+# print the final vector (1 pt)
+holding
+```

@@ -1,0 +1,90 @@
+---
+title: "EEMB 179 Project"
+author: "Kerri Luttrell"
+date: "3/1/2021"
+output: html_document
+---
+
+```{r}
+#took mean of max and min values
+rA <- 0.2525			#rate of coral recruitment 
+g <- 	0.25		# rate of coral growth
+a <- 	0.425		# maturation rate of recruits to adult coral
+beta <- 0.2			# rate of macroalgae overgrowth on adult corals
+w <-  2      # saturation level of herbivory
+da <- 0.201      # adult coral mortality
+dr <-  0.75     # recruit coral mortality
+  
+#constant
+rM <- 0.4		# rate of macroalgae recruitment and growth
+hb <- 0.2     # baseline macroalgae mortality (herbivory)  
+hs <- 0.4      # supplementary macroalgae mortality (herbivory)
+
+```
+
+
+```{r ODEs}
+tset <- seq(from = 0, to = 250, length.out = 250)
+#dR <- rA*A*(1-R-A-M) - a*R - rM *R*M - dR*R
+#dA <- a*R+ g*A*(1-R-A-M) - beta*A*M - dA*A
+#dM <-  rM*M*(1-R-A-M) + rM*R*M + beta*A*M - hB*M - hS*M*((w*A)/(1+w*A))
+```
+
+#SIMULATION
+
+```{r}
+# create a vector of timesteps to iterate over
+
+tset <- seq(from = 1, to = 250, length.out = 250)
+
+# create holding vectors and store initial conditions
+R.simu <- NaN*tset; R.simu[1] <- 0
+A.simu <- NaN*tset; A.simu[1] <- 0.6
+M.simu <- NaN*tset; M.simu[1] <- 0.4
+
+# for each element i from the second to the last in tset
+for(i in 2:length(tset)){
+  # calculate change in time
+	dt <- tset[i] - tset[i-1]
+	
+	# store dummy variables
+	R <- R.simu[i-1]
+	A <- A.simu[i-1]
+	M <- M.simu[i-1]
+	
+	# calculate change in population size of R, A, and M
+dR <- rA*A*(1-R-A-M) - a*R - rM *R*M - dr*R
+dA <- a*R+ g*A*(1-R-A-M) - beta*A*M - da*A
+dM <-  rM*M*(1-R-A-M) + rM*R*M + beta*A*M - hb*M - hs*M*((w*A)/(1+w*A))
+	
+	# calculate total population size of R, A, and M
+	R.simu[i] <- R + dR
+	A.simu[i] <- A + dA	
+	M.simu[i] <- M + dM	
+}
+
+tail(R.simu)
+tail(M.simu)
+tail(A.simu)
+```
+
+```{r}
+# plot H (H.simu1) as a function of time
+plot(x = tset, y = A.simu, 
+     col = 'blue', type = 'l', lwd = 2, las = 1,
+     xlab = 'Time', ylab = 'Population Size', 
+     ylim = c(0, max(c(A.simu, M.simu))))
+
+# plot P (P.simu1) as a function of time
+lines(x = tset, y = M.simu, 
+      col = 'red', lwd=2)
+
+lines(x = tset, y = R.simu, 
+      col = 'green', lwd=2)
+
+# create a legend
+#legend(x = 60, y = K, 
+       # legend = c('Host', 'Partner'), 
+       # lwd = 2, 
+       # col = c(Hcol, Pcol))
+```

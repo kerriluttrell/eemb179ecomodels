@@ -1,0 +1,248 @@
+---
+title: "Week 7"
+author: "Kerri Luttrell"
+date: "2/24/2021"
+output: html_document
+---
+
+# PART FOUR: Homework
+
+Using the model from Part One (two competitors, one resource):
+1. Alter the parameters such that a_N > a_M, and l_N > l_M. List your parameters here.
+= /2 points total
+
+```{r}
+r <- .5		# Intrinsic growth rate of the resource
+K <- 100	# Carrying capacity of the resource
+
+a_M <- 0.2 # Affinity or attack rate of M for/on the resource R
+a_N <- a_M*1.5
+	
+e <- 0.05	# Conversion efficiency of R into N or M
+l_M <- 0.01	# Mortality rate of N
+l_N <- l_M*1.25
+
+```
+
+
+2. Calculate R* for both species N and species M.
+= /2 points total
+```{r}
+Rstar_N <- l_N/e/a_N
+Rstar_N
+Rstar_M <- l_M/e/a_M
+Rstar_M
+```
+
+3. Based on your calculation, predict which species should "win" competition.
+= /1 point total
+```{r}
+#Species N should when because it has a lower Rstar value and is thus more competitively dominant than species M. 
+```
+
+4. Run a simulation and make a timeseries plot to confirm your prediction.
+/2 points for two sets of axes
+/3 points for each line (R, N, M)
+/1 point for legend
+/2 points for code
+= /8 points total
+
+```{r}
+# choosing timesteps to iterate over
+tset1 <- seq(from=0, to=10000, length.out = 100000)
+
+# filling in our initial conditions
+R.simu1 <- NaN*tset1; R.simu1[1] <- 0.5
+N.simu1 <- NaN*tset1; N.simu1[1] <- 1
+M.simu1 <- NaN*tset1; M.simu1[1] <- 1
+
+# for each element i from the second to the last in tset1
+for(i in 2:length(tset1)){
+  # calculate the change in time
+	dt <- tset1[i]-tset1[i-1]
+	
+	# store dummy variables
+	R <- R.simu1[i-1]
+	N <- N.simu1[i-1]
+	M <- M.simu1[i-1]
+	
+	# calculate change in population size at this timestep
+	dR <- ( r*R*(1-R/K) - a_N*N*R - a_M*M*R )*dt
+	dN <- ( e*a_N*N*R - l_N*N )*dt
+	dM <- ( e*a_M*M*R - l_M*M )*dt
+	
+	# calculate total population size and store in holding vector
+	R.simu1[i] <- R + dR
+	N.simu1[i] <- N + dN
+	M.simu1[i] <- M + dM
+}
+
+Rcol <- 'deepskyblue4'
+Ncol <- 'coral'
+Mcol <- 'seagreen'
+
+# plot R as a function of time
+plot(tset1,R.simu1,type='l',las=1,lwd=2,ylab='Resource',xlab='Time',col=Rcol)
+
+# plot species N and M as function time
+plot(tset1,M.simu1,type='l',las=1,lwd=2,ylab='Population Size',xlab='Time',col=Mcol,ylim=c(0,max(c(max(M.simu1,N.simu1)))))
+lines(tset1,N.simu1,lwd=2,col=Ncol)
+legend(x=8000,y=1,legend=c('N','M'),lwd=2,col=c(Ncol,Mcol))
+```
+
+```{r}
+tail(R.simu1)
+
+R.simu1[length(R.simu1)]
+Rstar_M
+```
+
+5. Try some different initial conditions. Do you believe that the system has only one stable equilibrium?
+/2 points for a simulation with different initial conditions
+/2 points for either a plot or tail values to find stable equilibria
+/1 point for answer
+/2 points for code
+= /7 points total
+
+```{r}
+r <- .5		# Intrinsic growth rate of the resource
+K <- 100	# Carrying capacity of the resource
+
+a_M <- 0.2 # Affinity or attack rate of M for/on the resource R
+a_N <- a_M*1.5
+	
+e <- 0.05	# Conversion efficiency of R into N or M
+l_M <- 0.01	# Mortality rate of N
+l_N <- l_M*1.25
+```
+
+```{r}
+Rstar_N <- l_N/e/a_N
+Rstar_N
+Rstar_M <- l_M/e/a_M
+Rstar_M
+```
+
+
+```{r}
+# choosing timesteps to iterate over
+tset1 <- seq(from=0, to=10000, length.out = 100000)
+
+# filling in our initial conditions
+R.simu2 <- NaN*tset1; R.simu2[1] <- 6
+N.simu2 <- NaN*tset1; N.simu2[1] <-2
+M.simu2 <- NaN*tset1; M.simu2[1] <- 3
+
+# for each element i from the second to the last in tset1
+for(i in 2:length(tset1)){
+  # calculate the change in time
+	dt <- tset1[i]-tset1[i-1]
+	
+	# store dummy variables
+	R <- R.simu2[i-1]
+	N <- N.simu2[i-1]
+	M <- M.simu2[i-1]
+	
+	# calculate change in population size at this timestep
+	dR <- ( r*R*(1-R/K) - a_N*N*R - a_M*M*R )*dt
+	dN <- ( e*a_N*N*R - l_N*N )*dt
+	dM <- ( e*a_M*M*R - l_M*M )*dt
+	
+	# calculate total population size and store in holding vector
+	R.simu2[i] <- R + dR
+	N.simu2[i] <- N + dN
+	M.simu2[i] <- M + dM
+}
+
+Rcol <- 'deepskyblue4'
+Ncol <- 'coral'
+Mcol <- 'seagreen'
+
+# plot R as a function of time
+plot(tset1,R.simu2,type='l',las=1,lwd=2,ylab='Resource',xlab='Time',col=Rcol)
+
+# plot species N and M as function time
+plot(tset1,M.simu2,type='l',las=1,lwd=2,ylab='Population Size', xlab='Time',col=Mcol, ylim=c(0,max(c(max(M.simu2,N.simu2)))))
+lines(tset1,N.simu2,lwd=2,col=Ncol)
+legend(x=8000,y=1,legend=c('N','M'),lwd=2,col=c(Ncol,Mcol))
+```
+
+```{r}
+tail(R.simu2)
+Rstar_M
+  tail(N.simu2)
+  tail(M.simu2)
+
+
+```
+I believe there is only one stable equilibrium in this system. Regardless of how I change the initial conditions, for this set of parameters the end result always shows N outcompeting M and R settling out at a value of 0.833. 
+
+6. Make three bifurcation diagrams showing the stable equilibria for R, N, and M as a function of K (the carrying capacity of the shared resource).
+/3 points for two or three sets of axes
+/3 points for each line (R, N, M)
+/3 points for code
+= /9 points
+```{r}
+
+Kset <- seq(from = 0, to = 50,length.out = 50)
+
+Rstarset <- NaN*Kset
+Nstarset <- NaN*Kset
+Mstarset <- NaN*Kset
+
+for(j in 1:length(Kset)){
+	K <- Kset[j] 
+	M.simu <- NaN*tset1
+	M.simu[1] <- 1 
+	N.simu <- NaN*tset1
+	N.simu[1] <- 1 
+	R.simu <- NaN*tset1 
+	R.simu[1] <- K
+	
+	for(i in 2:length(tset1)){
+		dt <- tset1[i]-tset1[i-1]
+		N <- N.simu[i-1]
+		M <- M.simu[i-1]
+		R <- R.simu[i-1]
+		dR <- ( r*R*(1-R/K) - a_N*N*R - a_M*M*R )*dt
+	  dN <- ( e*a_N*N*R - l_N*N )*dt
+	  dM <- ( e*a_M*M*R - l_M*M )*dt
+	R.simu[i] <- R + dR
+	N.simu[i] <- N + dN
+	M.simu[i] <- M + dM
+	}	
+	Nstarset[j] <- N.simu[length(tset1)]
+	Mstarset[j] <- M.simu[length(tset1)]
+	Rstarset[j] <- R.simu[length(tset1)]
+	
+}
+
+# plot stable equilibria of species N (Nstarset) against carrying capacity (Kset)
+plot(x = Kset, y = Nstarset,
+     type = 'l', lwd = 2, col = Ncol, las = 1, 
+     ylab = 'Stable equilibria of Species N, N*', xlab = 'Carrying capacity, K')
+
+# plot stable equilibria of species M (Mstarset) against carrying capacity (Kset)
+plot(x = Kset, y = Mstarset,
+     type = 'l', lwd = 2, col = Mcol,  ylim= c(0,1),
+     ylab = 'Stable equilibria of Species M, M*', xlab = 'Carrying capacity, K')
+
+# plot stable equilibria of resource (Rstarset) against carrying capacity (Kset)
+plot(x = Kset, y = Rstarset,
+     type = 'l', lwd = 2, col = Rcol, ylim= c(0,1),
+     ylab = 'Stable equilibria of Resource, R*', xlab = 'Carrying capacity, K')
+```
+
+7. Describe your bifurcation diagrams from Question 6 in words. What is the ecological interpretation of your findings?
+= /4 points total
+```{r}
+#At low carrying capacities, the stable equilibria for species N is below its Nstar max of ~1.64 individuals. At a carrying capacity of ~15 and beyond Species N is within 0.1 of its Nstar max. The equilibrium population size of species M is always hovering around zero no matter the carrying capacity. The equilibrium amount of resource is always at ~0.8333 regardless of carry capacity. Ecologically, at any carrying capacity N will outcompete M so that the equilibrium pop size of M is ~0 and N is >0. As long as there is enough room in the environment  (K>10), Species N will reach an equilibrium population size ~1.64. 
+```
+
+8. If there were a predator in your system, which prey item would it have to prefer in order for the two species to coexist?
+= /1 point total
+```{r}
+#If there was a predator in my system it would have to prefer species N. This is because species M has both a higher resource affinity and a lower mortality rate than species M, so in the absence of predation it outcompetes species M. By including predation in the system, the predator can exhibit topdown control on the population size of species N so that it does not use up all the resource and outcompete species M. 
+```
+
+= /34 points total

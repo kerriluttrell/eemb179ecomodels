@@ -1,0 +1,492 @@
+---
+title: 'EEMB 179: Week 3: HW'
+author: "Kerri Luttrell"
+date: "1/24/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Part Eight: Homework
+
+We'll set up our parameters here, to make sure we're on the same page.
+```{r}
+r <- 0.5
+K <- 100
+q <- 0.1
+A <- K/2 
+N0 <- 2
+```
+
+## 1. Logistically growing stocks
+### i. Show your plot for population change vs. N (black line = biology, blue line = harvest) for a stock that grows logistically and is being managed to give its maximum sustainable yield.
+**Remember: label your axes, and show legends!  **
+
+```{r} 
+Nset <- seq(from = 0, to = K*1.1, length.out = 200)
+dNdt.log <- r * Nset * (1-Nset/K)
+E_MSY <- r/q/2
+Nstar <- K*(1-q*E_MSY/r)
+Ystar <- q*E_MSY*Nstar
+
+plot(x = Nset, y = dNdt.log, type = 'l', las = 1, lwd = 2, ylab = 'Population Change', xlab = 'N')
+
+# plot the x-axis so that it's easier to see the intercept
+abline(h = 0, lwd = 1)
+
+# plot the economics in blue
+lines(x = Nset, y = (q*E_MSY*Nset), col = 'royalblue2', lwd = 2)
+# unstable
+points(x = 0, y = 0, 
+       pch = 21, cex = 1.5)
+# stable
+points(y = Ystar, x = Nstar, 
+       pch = 21, cex = 1.5, 
+       bg = 'black')
+legend(x = 0, y = -0.5, 
+       legend = c('growth', 'harvest', 'unstable equil.', 'stable equil.'), 
+       lwd = c(2, 2, NaN, NaN), 
+       pch = c(NaN, NaN, 21, 21), 
+       pt.cex = 1.5, 
+       pt.bg = c('white', 'white', 'white', 'black'), 
+       col = c('black', 'royalblue2', 'black', 'black'))
+```
+ /1 point for logistic growth line  
+ /1 point for harvest line at MSY  
+ /1 point for stable/unstable equilibria  
+ /1 point for legend  
+ /1 axes (popn change vs. N)  
+ = /5 points total  
+ 
+
+
+### ii. What are N_MSY, E_MSY, and Y_MSY for this stock? Print the values.  
+```{r}
+N_MSY <- K/2
+print(N_MSY)
+E_MSY <- r/q/2
+print(E_MSY)
+Y_MSY <- r*K/4
+print(Y_MSY)
+```
+ /1 for N_MSY  
+ /1 for E_MSY  
+ /1 for Y_MSY  
+ = /3 points total  
+ 
+
+
+## 2. Overcompensating stocks  
+### i. Show your plot for population change vs. N for a stock that exhibits overcompensation being harvested at MSY.   
+```{r}
+dNdt.over <- r*Nset*(1-Nset/K)*(2-Nset/K)
+tset <- seq(from = 0, to = 100, length.out = 20000) 
+N.over <- NaN*tset
+N.over[1] <- N0
+
+Y_MSY.over <- max(dNdt.over)
+
+for(i in 1:length(Nset)){
+  if(dNdt.over[i] == Y_MSY.over){
+    N_MSY.over <- Nset[i]
+  }}
+  E_MSY.over <- Y_MSY.over/(N_MSY.over*q)
+
+
+plot(x = Nset, y = dNdt.over , 
+     type = 'l', 
+     lwd = 2, 
+     las = 1, 
+     xlab = 'N', ylab = 'Change in Population')
+# add a line at the x-axis
+abline(h = 0)
+
+###################################
+# 2. economics
+###################################
+lines(x = Nset, y = q*E_MSY.over*Nset , 
+      lwd = 2,
+      col = 'royalblue2')
+
+###################################
+# 3. equilibria
+###################################
+# unstable
+points(x = 0, y = 0, 
+       pch = 21, cex = 1.5)
+# stable
+points(x = N_MSY.over, y = Y_MSY.over,
+       pch = 21, cex = 1.5, 
+       bg = 'black')
+
+###################################
+# 4. legend
+###################################
+legend(x = K*.6, y = Y_MSY.over, 
+       legend = c('growth', 'harvest', 'unstable equil.', 'stable equil.'), 
+       lwd = c(2, 2, NaN, NaN), 
+       pch = c(NaN, NaN, 21, 21), 
+       pt.cex = 1.5, 
+       pt.bg = c('white', 'white', 'white', 'black'), 
+       col = c('black', 'royalblue2', 'black', 'black'))
+```
+ /1 point for overcompensating stock line  
+ /1 point for harvest line at MSY  
+ /1 point for stable/unstable equilibria  
+ /1 point for legend  
+ /1 axes (popn change vs. N)  
+ = /5 points total  
+ 
+
+### ii. What are N_MSY, E_MSY, and Y_MSY for this stock? Print the values. 
+```{r}
+print(N_MSY.over)
+print(E_MSY.over)
+print(Y_MSY.over)
+```
+  
+ /1 for N_MSY.over  
+ /1 for E_MSY.over  
+ /1 for Y_MSY.over  
+ = /3 points total  
+ 
+
+ 
+## 3. Depensating stocks
+### i. Show your plot for population change vs. N at MSY  
+
+```{r}
+#Change in pop
+dNdt.dep <- r*Nset*(1-Nset/K)*(Nset/A)
+
+#Yield
+Y_MSY.dep <- max(dNdt.dep)
+
+#Population at msy yield
+for(i in 1:length(Nset)){
+  if(dNdt.dep[i] == Y_MSY.dep){
+    N_MSY.dep <- Nset[i]}}
+
+#Effort
+E_MSY.dep <- Y_MSY.dep/(q*N_MSY.dep)
+
+#Unstable Euilibria
+N_star_unstable <- ((-r/A) + (sqrt((r^2/A^2) - ((4*r*q*E_MSY.dep)/(K*A)))) ) / ((-2*r) / (K*A))
+
+Y.unstable.dep <- q * E_MSY.dep * N_star_unstable
+
+#################################
+# 1. biology
+#################################
+plot(x = Nset, y = dNdt.dep, 
+     type = 'l',
+     lwd = 2, 
+     las = 1, 
+     xlab = 'N', ylab = 'Change in Population')
+abline(h = 0)
+
+#################################
+# 2. economics
+#################################
+lines(x = Nset, y = q*E_MSY.dep*Nset, 
+      lwd = 2,
+      col = 'royalblue2')
+
+#################################
+# 3. stable equilibria
+#################################
+points(x = 0, y = 0, 
+       pch = 21, 
+       cex = 1.5, 
+       bg = 'black')
+points(x = N_MSY.dep, y = Y_MSY.dep, 
+       pch = 21, 
+       cex = 1.5,
+       bg= 'black')
+points(x = N_star_unstable, y = Y.unstable.dep, 
+       pch = 21, cex = 1.5,
+       bg = 'white')
+
+#################################
+# 4. legend
+#################################
+legend(x = 0, y = -1, 
+       pt.cex = 1.5, 
+       legend = c('growth', 'harvest', 'unstable equil.', 'stable equil.'), 
+       lwd = c(2, 2, NaN, NaN), 
+       pch = c(NaN, NaN, 21, 21), 
+       pt.bg = c('white', 'white', 'white', 'black'), 
+       col = c('black', 'royalblue2', 'black', 'black'))
+```
+
+ /1 point for depensating stock line  
+ /1 point for harvest line at MSY  
+ /1 point for stable equilibrium  
+ /1 point for unstable equilibrium  
+ /1 point for legend  
+ /1 axes (popn change vs. N)  
+ = /6 points total  
+ 
+
+ 
+ 
+### ii. What are N_MSY, E_MSY, and Y_MSY for this stock? Print the values.  
+```{r}
+print(N_MSY.dep)
+print(E_MSY.dep)
+print(Y_MSY.dep)
+```
+
+ /1 for N_MSY.dep  
+ /1 for E_MSY.dep  
+ /1 for Y_MSY.dep  
+ = /3 points total  
+
+ 
+### iii. At what population size does this model exhibit a 'tipping point'? What are the two alternative states it might exhibit?  
+
+**N = 33.12** individuals is the unstable equilibrium, aka 'tipping point'. 
+If the populations stays above this point it will reach the stable equilibria of 66.89 individuals. However, if the population falls below this tipping point it will reach the stable equilibrium of 0 individuals and go locally extinct.
+
+ /1 point for 'tipping point' population size  
+ /1 point first alternative state  
+ /1 point for second alternative state   
+ = /3 points total 
+ 
+
+ 
+### iv. Provide a graph of population trajectories (using different initial population sizes) that illustrates this tipping point. Hint: Your graph should have multiple population trajectories on it, and you will need a legend that indicates the N0 values corresponding to each.  
+
+## Tipping points
+
+```{r}
+##########################################
+# 1. designate a data vector (use tset)
+##########################################
+
+############################################
+# 2. holding vector and initial conditions
+############################################
+N0.low <- 33
+N0.high <- 34
+N0.100 <- 100
+
+N.simu.dep <- NaN*tset
+N.simu.dep.low <- NaN*tset
+N.simu.dep.high <- NaN*tset
+N.simu.dep.100 <- NaN*tset
+
+N.simu.dep[1] <- N0
+N.simu.dep.low[1] <- N0.low
+N.simu.dep.high[1] <- N0.high
+N.simu.dep.100[1] <- N0.100
+
+##########################################
+# 3. the for() loop
+##########################################
+for(i in 2:length(tset)){
+  deltat <- tset[i]-tset[i-1]
+  deltaN <- (r*N.simu.dep[i-1]*(1-N.simu.dep[i-1]/K)*(N.simu.dep[i-1]/A)-q*E_MSY.dep*N.simu.dep[i-1])*deltat
+  N.simu.dep[i] <- N.simu.dep[i-1]+deltaN
+  
+  deltaN <- (r*N.simu.dep.low[i-1]*(1-N.simu.dep.low[i-1]/K)*(N.simu.dep.low[i-1]/A)-q*E_MSY.dep*N.simu.dep.low[i-1])*deltat
+  N.simu.dep.low[i] <- N.simu.dep.low[i-1]+deltaN
+  
+  deltaN <- (r*N.simu.dep.high[i-1]*(1-N.simu.dep.high[i-1]/K)*(N.simu.dep.high[i-1]/A)-q*E_MSY.dep*N.simu.dep.high[i-1])*deltat
+  N.simu.dep.high[i] <- N.simu.dep.high[i-1]+deltaN
+  
+  deltaN <- (r*N.simu.dep.100[i-1]*(1-N.simu.dep.100[i-1]/K)*(N.simu.dep.100[i-1]/A)-q*E_MSY.dep*N.simu.dep.100[i-1])*deltat
+  N.simu.dep.100[i] <- N.simu.dep.100[i-1]+deltaN
+}
+```
+
+```{r}
+###################################
+# 1. plot N as a function of time
+###################################
+plot(tset, N.simu.dep, 
+     type = 'l', 
+     ylim = c(0, K), 
+     las = 1, 
+     lwd = 2, 
+     xlab = 'Time', ylab = 'Population Size')
+
+#################################################
+# 2. add lines for different initial conditions
+#################################################
+lines(tset, N.simu.dep.low, 
+      col = 'paleturquoise3', 
+      lwd = 2)
+lines(tset, N.simu.dep.high, 
+      col = 'peachpuff3', 
+      lwd = 2)
+lines(tset, N.simu.dep.100, 
+      col = 'coral2', 
+      lwd = 2)
+
+###################################
+# 3. legend
+###################################
+legend(x = max(tset)*.6, y = K, 
+       lwd = 2,
+       legend = c('N0=2', 'N0=33', 'N0=34', 'N0=100'), 
+       col = c('black', 'paleturquoise3', 'peachpuff3', 'coral2'), 
+       horiz = FALSE)
+```
+
+
+ /1 point for population trajectory 1  
+ /1 point for population trajectory 2  
+ /1 point for legend  
+ /1 point for axes (N vs t)  
+ = /4 points total
+ 
+
+ 
+### v. If you were a manager of this stock, what would you be worried about? How might you try to avoid that problem?  
+
+  If I were a manager of this stock I would be worried about the population dipping below the tipping point and crashing. This could happen due to accidental overharvest, poor population size estimates, or an atypical breeding year. In order to try to avoid this problem a manager may monitor catch reports more strictly and set take limits below MSY to allow room for error or to compensate for illegal or unmonitored fishing. If the population was close to the tipping point or hard to manage, I may, as a manager, advocate for preemptive protection of the species. 
+
+= /2 points total  
+
+## 4. Subsidized stocks  
+Consider a fishery whose population grows logistically and which is next to a marine reserve. No fishing is allowed in this marine reserve, so it contains a large, healthy population of fish. Some of this population spills over into the fished area at a rate of 'M' fish per unit of time.  
+We can represent this mathematically as:   
+$\frac{dN}{dt} = r*N*(1-\frac{N}{K}) - q*E*N + M$  
+Let's continue to use the parameters $r = 0.5$ and $K = 100$. Let's further set $M = 10$.  
+
+### i. Plot the 'biology' and the 'economics' as a function of population size. That is, make a plot with N on the x-axis and two lines, one representing the subsidized logistic growth (r*N*(1-N/K) + M), and one representing harvest (q*E*N). For the economics, choose E = E_MSY from your logistic analysis in the first part of this lab. 
+
+```{r}
+M <- 10
+
+dNdt.log4 <- (r*Nset*(1-Nset/K) + (Nset/Nset)*M)
+
+N.simu.M <- NaN*tset
+N.simu.M[1] <- Nset[1]+M
+```
+
+```{r include=FALSE}
+# #for(i in 2:length (tset)){
+#   dt.M <-  tset[i] -tset[i-1]
+#   dNdt.M <-  (r*N.simu.M[i-1]*(1-N.simu.M[i-1]/K)- q * E_MSY* N.simu.M[i-1]+M) * dt
+#   N.simu.M[i] <- N.simu.M[i-1]+ dNdt.M
+# }
+
+Nstar.M <- 76.23
+
+
+```
+
+```{r}
+
+Ystar.M <-  q*E_MSY*Nstar.M
+
+# plot the biology in black
+plot(x = Nset, y = dNdt.log4, type = 'l', las = 1, lwd = 2, ylab = 'Population Change', xlab = 'N')
+
+# plot the x-axis so that it's easier to see the intercept
+abline(h = 0, lwd = 1)
+
+# plot the economics in blue
+lines(x = Nset, y = (q*E_MSY*Nset), col = 'royalblue2', lwd = 2)
+
+points(x=Nstar.M, y=Ystar.M,
+       pch= 21, cex = 1.5,
+       bg= "black")
+
+legend(x = 060, y = 10, 
+       lwd = c(2, 2, NaN),
+       pch = c(NaN,NaN, 21),
+       legend = c('growth', 'harvest', 'stable equil.'), 
+       col = c('black', 'royalblue2', "black"))
+
+```
+
+
+ /1 point for subsidized stock line  
+ /1 point for harvest line   
+ /1 point for stable equilibrium  
+ /1 point legend  
+ /1 point for axes (popn change vs. N)  
+ = /6 points total  
+ 
+
+ 
+### ii. Does this effort level still yield the maximum sustainable yield?  
+No
+
+ = /1 point total   
+ 
+### iii. If not, adjust effort and report your new E_MSY, N_MSY, and Y_MSY.  
+```{r adjust E, N, Y}
+
+dNdt.sub <- na.omit(dNdt.log4)
+Y_MSY.sub <- max(dNdt.sub)
+```
+```{r include=FALSE}
+Y_MSY.sub <- 22.49968
+N_MSY.sub <- 49.19598
+```
+```{r}
+#for(i in 1:length(Nset)){if(dNdt.sub[i] == Y_MSY.sub){N_MSY.sub <- Nset[i]}}
+E_MSY.sub <- Y_MSY.sub/(q*N_MSY.sub)
+
+print(Y_MSY.sub)
+print(N_MSY.sub)
+print(E_MSY.sub)
+
+```
+ /1 point for N_MSY.sub  
+ /1 point for E_MSY.sub  
+ /1 point for Y_MSY.sub  
+ = /3 points  
+ 
+
+
+### iv. Make a new version of your graph from part (i), but using your new E_MSY.  
+```{r subplot}
+
+  plot(x = Nset, y = dNdt.log4, type = 'l', las = 1, lwd = 2, ylab = 'Population Change', xlab = 'N')
+
+# plot the x-axis so that it's easier to see the intercept
+abline(h = 0, lwd = 1)
+
+# plot the economics in blue
+lines(x = Nset, y = (q*E_MSY.sub*Nset), col = 'royalblue2', lwd = 2)
+
+points(x = N_MSY.sub, y = Y_MSY.sub, 
+       pch = 21, 
+       cex = 1.5,
+       bg= 'black')
+
+legend(x = 060, y = 10, 
+       lwd = c(2, 2, NaN),
+       pch = c(NaN,NaN, 21),
+       legend = c('growth', 'harvest', 'stable equil.'), 
+       col = c('black', 'royalblue2', "black"))
+
+
+```
+ /1 point for subsidized stock line  
+ /1 point for harvest line with new E_MSY from the subsidized stock analysis  
+ /1 point for stable equilibrium  t
+ /1 point legend  
+ /1 point for axes (popn change vs. N)  
+ = /5 points total  
+
+  
+### v. Explain how having the nearby reserve affected the fishery you are managing.  
+The nearby reserve creates a "spillover effect" in which unfished populations are able to grow in the reserve and "spill over" into the fished area population. Thus, you are able to fish at a higher Effort level and take more fish at a time.
+ = /2 points total   
+
+## 5. Comparison across stocks: Compare N_MSY and E_MSY for the four stocks you've studied in this lab. Explain, biologically, why any differences exist.  
+
+The population size at maximum sustainable yield is biggest in depensating populations (66.88) and smallest for overcompensating populations (42.01). This makes sense because a smaller amount of overcompensating breeders is needed to produce X amount of offspring because of their ample breeding strategy (e.g. broadcast spawning). For a depensating population, more individuals are needed to produce the same X amount of offspring because the have a slower rate of population growth than would be expected due to Allee effects (e.g. mate limitation). The subsidized population has about the same N_MSY as the normally growing population because they both have the same growth rate from generation to generation, so you still need the same number of individuals to maintain a constant population from year to year. 
+
+The effort level at maximum sustainable  yield was highest for overcompensating and subsidized populations (4.58 and 4.57, repectively) and lowest for normal and depensating populations (2.5 and 2.2, respectively). Effort can be higher in the overcompensating and subsidized stocks because the population doesn't need as much time to grow between yields. For the overcompensating stocks this is because they have a higher growth rate and for the subsidized stocks this is because no matter what the will be supplemented with 10 breeding individuals following a yield that will help restore their numbers more quickly, even though each individual still have a normal breeding strategy. The normally growing stock has a effort level of 2.5, which is higher than that of the depensating stock. This is because the depensating stock needs more time between yield to restore their population size due to factors that limit their reproductive capacity.
+
+
+ /2 points for N_MSY comparison across logistic, overcompensating, depensating and subsidized stocks  
+ /2 points for E_MSY comparison across logistic, overcompensating, depensating and subsidized stocks  
+ = /4 points total  

@@ -1,0 +1,475 @@
+---
+title: 'EEMB 179 -- Lab 2: Population Growth Models'
+date: "January 14, 2021"
+output:
+  html_notebook: default
+  html_document: default
+  pdf_document: default
+  word_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+### Class Announcements
+
+* Computer Lab Attendance: 
+Fluency in any language requires practice. Group settings where you can 'speak' the language of computer science with your peers and instructors will help build your skills as a confident coder. Your instructors have carefully annotated each lab to support self-study outside of class, but we must emphasize that weekly lab attendance is expected for all students. You must reach out to your instructors prior to lab if you will miss section, so we can discuss the best ways to support your learning. We'd also like to note that your instructors do want to see you in office hours if you have questions, but that office hours are a place for questions after reviewing the course material. Office hours are not a place for a repeated lab lesson if a student chooses to miss a section as an unexcused absence. 
+    + This policy can be found on Gauchospace.
+
+* Useful R cheatsheet below: 
+
+[Base R Cheatsheet](https://www.rstudio.com/wp-content/uploads/2016/05/base-r.pdf)
+
+***
+
+### A. How do we do tasks outside the `base` R environment? : External packages
+
+1. What are packages?
+
+* Packages are units of reproducible R code that contain **functions** (commands that tell R to do something). 
+
+* There are eight default or `base` packages pre-supplied in R with a variety of functions within them (e.g., the `sum()` or `mean()` functions). There are >10,000 external packages that were built by everyday users in the R community (just like yourself!). 
+
+* For example, the 'graphics' package is pre-supplied in R with the `plot()` function that allows users to visualize data. Over time, other users in the community have written other packages with new functions to visualize data in alternative ways. 
+
+* It's important to remember that you'll need to call the external package of choice when you need it with the `library()` or `require()` function.
+      
+2. Install sciplot with the `install.packages()` function
+```{r}
+
+# The dependencies argument indicates whether to also install uninstalled packages which these packages depend on.
+
+library(dplyr)
+# You only need to do this once!
+```
+
+3. Load deSolve, ggplot and sciplot with the `library()` function
+```{r}
+library(sciplot) # equivalent to require(sciplot)
+require(sciplot) # equivalent to library(sciplot)
+
+# You need to do this every time you re-open an R session. 
+```
+
+4. Have questions? The `help()` function calls documentation for functions.
+```{r}
+?bargraph.CI # this a function WITHIN the sciplot package
+# or 
+help("bargraph.CI")
+```
+
+***
+### B. Introduction to this lab
+During the first lecture, Dr. Moeller described a mathematical model for a quirky microbe that steals chloroplasts from the algae that it eats. This week, we'll use data collected by Dr. Moeller and an *undergraduate* researcher in her group (Cara Chinn) to estimate growth rates and carrying capacities.
+
+The data can be found here:
+https://docs.google.com/spreadsheets/d/11_ri3zB-o9Gz0OFbODmChlpDthw8jyOwQNjGblIOiBA/edit?usp=sharing
+
+*BE SURE TO NAVIGATE TO YOUR SECTION'S TAB!*
+
+These are *timeseries* data: Each row shows the population sizes (measured as number of chloroplast-stealing _Mesodinium chamaeleon_ cells per mL) over a 14-day experiment. (Some rows have fewer data because the experiments were not run for a full two weeks.)
+
+There are several types of timeseries. The experiment was run at three different light levels (10 being the lowest, and 100 being the highest), and _Mesodinium chamaeleon_ was fed two different types of prey (a red type, _Rhodomonas salina_, and a blue-green type, _Hemiselmis pacifica_). Furthermore, _Mesodinium chamaeleon_ was either actively fed during the experiment, or starved.
+
+During this lab, you'll help Dr. Moeller and Cara determine how prey type, light level, and feeding history affect the growth of _Mesodinium chamaeleon_ by:
+
+1. "Adopting" one of the timeseries datasets, and using it to calculate the growth rate and carrying capacity for _Mesodinium chamaeleon_.
+
+2. Adding your results to the class's master datasheet.
+
+3. Analyzing the data across treatments.
+
+*Let's start by writing down some hypotheses.*
+Jot down some notes for yourself. Under what conditions do you think _M. chamaeleon_ will have the fastest growth rate? High or low light levels? Fed or starved?
+
+
+### C. Enter your data
+0. Adopt a dataset. Write your name in column P next to the row of data that you'll be using.
+
+1. Make a vector of experimental timepoints with the `c()` function and name the output ExptDays with variable assignment. Call the variable to confirm your vector is correct. Take note of the collection dates in the header row of the datasheet. Do not include NAs into your vector.
+```{r}
+ExptDays <- c(1,2,3,5,7,9,11,13,15)
+
+# Why did we use the c() function instead of the : operator? 
+# What's another function we could have used? 
+```
+
+2. Make a vector of your data with the `c()` function and name the output MyDensities with variable assignment. Call the variable to confirm your vector is correct. Include NAs into your vector. Note that you can copy-paste the row that you've chosen, but you'll have to use commas to separate each entry.
+```{r}
+MyDensities <- c(743.75,	743.75,	978.57,	2791.67,	7933.33,	7562.5,	7466.67,	7616.67,	5850)
+
+MyDensities
+
+
+```
+
+3. Check to make your vectors are the same length with the `length()` function and the `==` operator, which refers to an exact match.
+```{r}
+length(ExptDays) == length(MyDensities)
+
+# Where are other places you can look in RStudio to check?  
+```
+
+### D. Calculate Growth Rate
+
+We will now simulate population growth scenarios based on these timeseries data. We will also use graphs as visual aids to see our predictions. In this lab, we will study both *exponential population growth* and *logistic population growth* patterns. 
+
+*Exponential* growth is characterized by a by a per capita growth rate that becomes more rapid in proportion to the population size. 
+
+*Logistic* growth is characterized by a per capita growth rate that decreases as population size approaches some maximum value.
+
+
+1. Plot population size (y-axis) as a function of the experimental time points (x-axis) with the `plot()` function. The functions and most arguments have been entered for you. Enter in your ExptDays and MyDensities variables as x and y, respectively. 
+```{r}
+plot(x = ExptDays, y = MyDensities, xlab = 'Experimental Timepoints', ylab = 'M. chamaeleon abundance (cells/mL)', las = 1)
+    
+# What do you think the arguments xlab and ylab do? 
+
+# Note: 'las = 1' changes the orientation of the tick mark labels to all horizontal.
+```
+
+**Observe your results. Do your data look more like exponential or logistic growth?**
+
+2. Plot **log-transformed** densities (y-axis) as a function of the experimental time points (x-axis) with the 'log' argument in `plot()` function. The function and most arguments have been entered for you. Enter in your ExptDays and MyDensities variables as x and y, respectively, in BOTH functions. 
+
+2A. Log-transform your densities with the `log()` function and name the output ln.MyDensities with variable assignment. Note: the function 'log' is actually the natural log which we commonly write as 'ln'. You would use 'log10' to take the base 10 log.
+```{r}
+ln.MyDensities <- log(MyDensities)
+```
+
+
+4. Plot your **log-transformed** density (y-axis) as a function of the experimental time points (x-axis) with the `plot()` function. The function and most arguments have been entered for you. Enter in your ExptDays and ln.MyDensities variables as x and y, respectively, in BOTH functions. 
+```{r}
+plot(x = ExptDays, y = ln.MyDensities, xlab = 'Experimental Timepoints', ylab = 'ln(M. chamaeleon abundance)', las = 1)
+```
+
+**Observe your results. Over what portion of the experiment (what experimental dates) does the data look linear? What range of timepoints will you use to calculate 'r', the exponential growth rate?**
+linear from days 2-7, thus we will use linear portion to calc growth rate
+
+
+5. Inspect your **log-transformed** graph from #4 and select a range of x-values for which your points are linear. Use variable assignment to name the first day of your range of x-values as t_start and the last day of your range of x-values as t_end. 
+```{r}
+ExptDays
+t_start <- ExptDays[3]
+t_end <- ExptDays[5]
+```
+
+6. Plot markers overlaying your data to check your choices. Adjust them if you need to. Can you adjust t_start and t_end in this chunk or do you need to look somewhere else? 
+```{r}
+# Don't forget to plug in ExptDays and ln.MyDensities variables as x and y, respectively. 
+plot(x = ExptDays, y = ln.MyDensities, xlab = 'Experimental Timepoints', ylab = 'ln(M. chamaeleon abundance)', las = 1)
+abline(v = t_start, col = 'red')
+abline(v = t_end, col = 'red')
+```
+
+7. Use a linear model to calculate the slope. To do this, we will constrain our data to only the timepoints of interest by selecting the entries from the vectors for time and population size. Fill in the your t_start and t_end within the brackets using the colon `:` operator to subset the ln.MyDensities and ExptDays vectors. 
+```{r} 
+
+lm1 <- lm(ln.MyDensities[t_start:t_end] ~ ExptDays[t_start:t_end])
+
+lm1
+```
+
+8. Add a plot of lm1 to your dataset. Do you want to make any adjustments to your selected data range? (Note that you'll have to re-run the linear model function, above, if you do!)
+```{r}
+plot(x = ExptDays, y = ln.MyDensities, xlab = 'Experimental Timepoints', ylab = 'ln(M. chamaeleon abundance)', las = 1)
+abline(lm1, col='blue')
+
+# You must play both lines of code at once to see the experimental data and linear model overlap. 
+# You can output this plot into your plot window (bottom-right panel) by copying-pasting into console.
+```
+
+9. Print and examine the output from your linear model. For each estimated parameter (called 'Coefficients'), the program will output a p-value (called 'Pr(>|t|)'). Is your slope significant?
+```{r}
+summary(lm1)
+```
+
+10. Store the slope as the estimated growth rate
+```{r}
+# Enter this value in the google spreadsheet
+r.est <- lm1$coef[2]
+r.est
+
+# What's the $ operator do?
+#$ means choose or extract
+```
+
+### E. Simulate Exponential Growth / THINK PAIR SHARE 1
+
+1. Create a vector of timepoints that you'll use to simulate exponential growth. The 'seq' command generates a SEQuence of values ranging from the first input (here, set as the starting experimental timepoint using the 'min' function) to the second input (here, set as the end experimental timepoint). The 'length' input tells the program how long the sequence of numbers should be. 
+
+ HINT: Experiment with different 'length' values. How does this change the model fit? Why do you think this is the case?
+```{r}
+exp.tmpts <- seq(from = min(ExptDays), to = max(ExptDays), length = 1000)
+
+```
+
+2. Create a holding vector for the simulation results of the same length as 'exp.tmpts'. Name this vector exp.simu with variable assignment. Populate your holding vector with NaNs. 'NaN's are a useful placeholder because this will prevent anything from being plotted/output in analyses later on if there's an issue with the 'for' loop.
+```{r}
+exp.simu <- rep(NaN,times=length(exp.tmpts))
+
+```
+
+3. Set up the initial condition (i.e., the population size at the first timepoint) using your data
+```{r}
+# store My densities in the vector exp.simu for the initial timepoint
+exp.simu[1] <- MyDensities[1]
+exp.simu[1]
+```
+
+4. Run a `for()` loop to calculate the remainder of the simulation values. 
+```{r}
+
+for(i in 2:length(exp.tmpts)){ #for all variables from 2 to the length of exp.tmpts (elapsed time), 
+	deltat = exp.tmpts[i] - exp.tmpts[i-1]  #change in time is equal to the ith value in exp.tmpts minus the ith-1 value in exp.tmpts 
+	deltaN = exp.simu[i-1] * r.est * deltat #change in population size/density is equal to the ith minus 1 value of exp.simu times the slope (r.est) times change in time  
+	exp.simu[i] = exp.simu[i-1] + deltaN  #the ith value in exp.simu is equal to the ith minus 1 value in exp.simu plus the change in populaitonsize/density
+}
+
+## Why did we use 2:length(exp.tmpts) instead of 1:length(exp.tmpts)? 
+#we have to start at value two so that there is a previous value to subtract from
+## Why don't we need to make holding vectors for deltat and deltaN?
+#becuase we afre not going to reintroduce the vectors later on we don't have to save them
+```
+
+5. Make a plot overlaying your model output on your observed data. To help us see the divergence between the results, we'll increase the scale of the y-axis (using the 'ylim' command) to 50% greater than the maximum observed population size.
+```{r}
+# ENTER X AND Y AXES AND ANNOTATE
+plot(x = ExptDays, y = MyDensities, xlab = 'Experimental Timepoints', ylab = 'M. chamaeleon abundance (cells/mL)', las = 1, ylim = c(0, 1.5 * max(MyDensities,na.rm=TRUE))) 
+lines(x = exp.tmpts, y = exp.simu, col = 'blue') 
+
+```
+
+6. Observe your results. Any discrepancies between your simulation and your observations? What do you think may be responsible?
+
+
+### F. Estimate Carrying Capacity
+
+1. One reason your exponential growth model may not have fit well is because population growth slowed as your organisms approached their carrying capacity 'K'. Now, we'll estimate 'K' and repeat our simulation to see if we get a better fit.
+
+Let's assume that K is equal to the maximum population size.
+
+Use the max() function to find the maximum value of your MyDensities (experimental data) and assign it as K.est with variable assignment. 
+```{r}
+# Enter this value in your google spreadsheet
+K.est <- max(MyDensities, na.rm=TRUE)  
+K.est
+
+# How does removing the 'na.rm=TRUE' argument change your estimate of K?
+#not at all i dont have Na's
+```
+
+**NOTE: Can you think of a better way to estimate K? Try it out!**
+
+### G. Simulate Logistic Growth / THINK PAIR SHARE 2
+
+2. Create a vector of timepoints using the seq() function from the minimum ExptDays to the maximum Expt days of a length 10000. Name this vector log.tmpts with variable assignment. 
+```{r}
+log.tmpts <- seq(from= min(ExptDays), to=max(ExptDays), length=10000)
+
+```
+
+3. Create a vector to hold population sizes of same length as 'log.tmpts' filled with NaNs. Name it log.simu with variable assignment. 
+```{r}
+log.simu <- rep(NaN, times=length(log.tmpts))
+
+```
+
+4. Input your initial condition
+```{r}
+
+log.simu[1] <- MyDensities[1]
+log.simu[1]
+
+```
+
+5. Run the 'for' loop to calculate the remainder of the simulation values using the logistic growth function. 
+  The equation for logistic growth to populate within your for() loop is given for you below: 
+  deltaN = log.simu[i-1] * r.est * (1 - log.simu[i-1] / K.est) * deltat 
+```{r}
+for(i in 2:length(log.tmpts)){  
+	deltat = log.tmpts[i] - log.tmpts[i-1]  
+	deltaN = log.simu[i-1] * r.est * (1 - log.simu[i-1] / K.est) * deltat 
+	log.simu[i] = log.simu[i-1] + deltaN  
+}
+
+```
+
+6. Plot the results.
+```{r}
+# ENTER X AND Y AXES AND ANNOTATE
+plot(x = ExptDays, y = MyDensities, xlab='Experimental Timepoints', ylab='M. chamaeleon abundance (cells/mL)', las=1, ylim = c(0, 1.5 * max(MyDensities,na.rm=TRUE))) 
+lines(x = exp.tmpts, y = exp.simu,col='blue') 
+lines(x = log.tmpts, y= log.simu,col='green') 
+
+```
+
+ How'd it go? Did you get a good fit? Why or why not?
+
+
+
+ Do you think changes to any of your parameters might help your model fit better? Try them, and see!
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+### H. Download Class Data
+
+Download the class data from the Google Sheet in .csv format
+
+The data can be found here:
+https://docs.google.com/spreadsheets/d/11_ri3zB-o9Gz0OFbODmChlpDthw8jyOwQNjGblIOiBA/edit?usp=sharing
+
+*BE SURE TO NAVIGATE TO YOUR SECTION'S TAB!*
+
+Set your working directory
+
+* Your working directory is where R will look to load files into your environment pane and where your output files will be stored if you wish to export them from your R environment to your local disk. 
+    
+* Let's check where the working directory is with the `getwd()` **function**:
+```{r}
+getwd() 
+```
+* Your working directory will be different. If you wish to change your working directory you can do so by changing the path to where R looks:
+```{r}
+setwd("/Users/Kerri/Downloads")
+
+# Why are quotation marks needed? 
+#character string 
+```
+* You can also change your working directory by pressing 'Session' > 'Set Working Directory' > 'Choose Working Directory' 
+    
+```{r}
+# Put the spreadsheet in your working directory. Read the spreadsheet in with the read.csv function and name it 'ClassData' with variable assignment. 
+
+
+ClassData <- read.csv("EEMB179_279_W21_Lab2_GrowthData - 6PM Lab.csv", header = TRUE)
+
+glimpse(ClassData)
+```
+
+Trust your classmates? You can go ahead and use their estimated r and K values in the columns 'r.est' and 'K.est'. Don't trust them? The raw density data are included in the Google Sheet so that you can re-calculate everything if you want to. :) 
+
+### I. Compare Species Traits 
+1. Make a box plot of growth rates by prey species
+
+```{r}
+boxplot(ClassData$r.est~ClassData$PreyType, las=1, xlab='Species', ylab='Estimated growth rate, r')
+```
+
+HINT: If you prefer barplots to boxplots, I like 'bargraph.CI' from the 'sciplot' package as a quick plotting tool that will automatically compute error bars...
+```{r}
+require(sciplot)
+
+bargraph.CI(PreyType, r.est, group=c(Treatment), data=ClassData, 
+            xlab='Species', ylab='Estimated growth rate, r', 
+            legend=TRUE, bty='y', x.leg=14.3, las=1)
+```
+
+2. Is growth rate affected by the feeding treatment?
+```{r}
+boxplot(ClassData$r.est ~ ClassData$Treatment*ClassData$PreyType)
+```
+ 
+3. Are growth rates significantly different?
+ We'll perform an ANOVA using the 'aov' command. The 'TukeyHSD' wrapper function performs a Tukey's Honestly Significant Difference test to correct for the testing of multiple hypotheses (i.e., that species X is different from species Y and X is different from Z and so forth)
+```{r}
+TukeyHSD(aov(r.est ~ PreyType, data=ClassData))
+#p<0.5, slop sig diff b/n prey types
+```
+
+4. In looking at the output, pay attention to the 'p adj' column, which shows the p-value (the 'adj' refers to adjustment by the Tukey test). This isn't a stats class, but if the p-value is less than 0.05 we can say that the experiments being compared (listed in the leftmost column of the output) have significantly different growth rates.
+
+What happens when we account for the different light levels at which cultures were grown?
+```{r}
+str(ClassData)
+ClassData$LightLevel <- as.factor(ClassData$LightLevel) # We need to turn Light Level into a factor (instead of an integer) so that R knows how to handle it in an ANOVA.
+
+TukeyHSD(aov(r.est~LightLevel,data=ClassData[ClassData$PreyType=="Hemiselmis pacifica" & ClassData$Treatment=='Fed',])) # The bracketed portion of this command allows us to subset the data so that we're considering our results one prey species and feeding treatment at a time.
+TukeyHSD(aov(r.est~LightLevel,data=ClassData[ClassData$PreyType=="Hemiselmis pacifica" & ClassData$Treatment=='Starved',])) 
+
+
+TukeyHSD(aov(r.est~LightLevel,data=ClassData[ClassData$PreyType=="Rhodomonas salina" & ClassData$Treatment=='Fed',])) 
+TukeyHSD(aov(r.est~LightLevel,data=ClassData[ClassData$PreyType=="Rhodomonas salina" & ClassData$Treatment=='Starved',])) 
+#rates don't differ with light
+```
+
+5. Do the same comparison for carrying capacities.
+
+```{r}
+boxplot(ClassData$K.est~ClassData$PreyType, las=1, xlab='Species', ylab='Estimated growth rate, r')
+```
+
+```{r}
+require(sciplot)
+
+bargraph.CI(PreyType, K.est, group=c(Treatment), data=ClassData, 
+            xlab='Species', ylab='Estimated Carrying Capacity, K', 
+            legend=TRUE, bty='y', x.leg=14.3, las=1)
+```
+
+```{r}
+boxplot(ClassData$K.est ~ ClassData$Treatment*ClassData$PreyType)
+```
+
+```{r}
+ TukeyHSD(aov(K.est ~ PreyType, data=ClassData))
+#p<0.5, slop sig diff b/n prey types
+
+```
+
+```{r}
+str(ClassData)
+ClassData$LightLevel <- as.factor(ClassData$LightLevel) # We need to turn Light Level into a factor (instead of an integer) so that R knows how to handle it in an ANOVA.
+
+TukeyHSD(aov(K.est~LightLevel,data=ClassData[ClassData$PreyType=="Hemiselmis pacifica" & ClassData$Treatment=='Fed',])) # The bracketed portion of this command allows us to subset the data so that we're considering our results one prey species and feeding treatment at a time.
+TukeyHSD(aov(K.est~LightLevel,data=ClassData[ClassData$PreyType=="Hemiselmis pacifica" & ClassData$Treatment=='Starved',])) 
+
+
+TukeyHSD(aov(K.est~LightLevel,data=ClassData[ClassData$PreyType=="Rhodomonas salina" & ClassData$Treatment=='Fed',])) 
+TukeyHSD(aov(K.est~LightLevel,data=ClassData[ClassData$PreyType=="Rhodomonas salina" & ClassData$Treatment=='Starved',])) 
+#rates differ b/nfed with low and inter light ldevels
+```
+
+6. Let's make a bifurcation diagram 
+```{r}
+# Make a sequence of carrying capacities to iterate over
+Kset <- seq(from = 1, to = 100, length.out = 100)
+
+# Make a holding vector to hold N* of the same length as Kset
+Nstarset <- NaN*Kset
+
+# Increase timepoints to iterate over to make sure we're at equilibrium
+log.tmpts <- seq(from = min(ExptDays), to = max(ExptDays)+10, length = 1000)
+
+# Nested for loop
+#calc popo sizes for each value of K
+#pull out stable equilibria Nstar
+for(j in 1:length(Kset)){ # Iterate over values of carrying capacity
+  K <- Kset[j] # for every variable in Kset, use variable assignment to set it as K 
+  N.simu <- NaN*log.tmpts; N.simu[1] <- MyDensities[1] # Make a holding vector for simulated N values; set the initial condition as day 1 of population size 
+  for(i in 2:length(log.tmpts)){ # iterate over timepoints for the logistic simulation
+	deltat = log.tmpts[i] - log.tmpts[i-1] 
+	N <- N.simu[i-1]
+	deltaN = N * r.est * (1 - N / K) * deltat 
+	N.simu[i] = N + deltaN
+  }
+  Nstarset[j] <- N.simu[length(log.tmpts)] # pull the last value of N.simu at equilibrium and store within Nstarset
+}
+
+plot(Kset, Nstarset, type='l', lwd=2, xlab = "Carrying Capacity, K", ylab = "Stable Equilibria of Popn Size, N*")
+abline(v = 1, h = 1, col = 'red') # to demonstrate N* = K 
+abline(v = 50, h = 50, col = 'red') # to demonstrate N* = K 
+abline(v = 100, h = 100, col = 'red') # to demonstrate N* = K 
+```

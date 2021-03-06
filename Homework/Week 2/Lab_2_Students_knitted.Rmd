@@ -1,0 +1,180 @@
+---
+title: 'EEMB 179 -- Lab 2: Population Growth Models'
+date: "January 14, 2021"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
+  word_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+```{r}
+library(ggplot2)
+
+library(tidyverse)
+library(dplyr)
+library(sciplot) # equivalent to require(sciplot)
+ 
+```
+
+
+
+
+### J. Homework 
+
+ Output these plots:
+ (1) Plot of your POPULATION SIZE DATA, overlaid by your exponential and logistic model fits. Be sure to include a legend indicating which model fit is which!
+ 
+```{r homework}
+ExptDays <- c(1,2,3,5,7,9,11,13,15)
+
+MyDensities <- c(743.75,	743.75,	978.57,	2791.67,	7933.33,	7562.5,	7466.67,	7616.67,	5850)
+
+ln.MyDensities <- log(MyDensities)
+
+t_start <- ExptDays[2]
+t_end <- ExptDays[5]
+
+lm1 <- lm(ln.MyDensities[t_start:t_end] ~ ExptDays[t_start:t_end])
+
+r.est <- lm1$coef[2]
+
+```
+
+
+```{r}
+exp.tmpts <- seq(from = min(ExptDays), to = max(ExptDays), length = 20)
+
+exp.simu <- rep(NaN,times=length(exp.tmpts))
+
+# intial conditions
+exp.simu[1] <- MyDensities[1]
+exp.simu[1]
+
+for(i in 2:length(exp.tmpts)){ #for all variables from 2 to the length of exp.tmpts (elapsed time), 
+	deltat = exp.tmpts[i] - exp.tmpts[i-1]  #change in time is equal to the ith value in exp.tmpts minus the ith-1 value in exp.tmpts 
+	deltaN = exp.simu[i-1] * r.est * deltat #change in population size/density is equal to the ith minus 1 value of exp.simu times the slope (r.est) times change in time  
+	exp.simu[i] = exp.simu[i-1] + deltaN  #the ith value in exp.simu is equal to the ith minus 1 value in exp.simu plus the change in populaitonsize/density
+}
+```
+
+```{r logistic}
+# Estimate carrying capacity
+K.est <- max(MyDensities, na.rm=TRUE)  
+K.est
+
+#create vectors
+log.tmpts <- seq(from= min(ExptDays), to=max(ExptDays), length=10000)
+
+log.simu <- rep(NaN, times=length(log.tmpts))
+
+#initial condition
+log.simu[1] <- MyDensities[1]
+log.simu[1]
+
+#deltaN = log.simu[i-1] * r.est * (1 - log.simu[i-1] / K.est) * deltat 
+
+for(i in 2:length(log.tmpts)){  
+	deltat = log.tmpts[i] - log.tmpts[i-1]  
+	deltaN = log.simu[i-1] * r.est * (1 - log.simu[i-1] / K.est) * deltat 
+	log.simu[i] = log.simu[i-1] + deltaN  
+}
+
+```
+
+```{r fig.height=4, fig.width=6}
+#ylim command allows us to see model output above maximum MyDensity
+
+plot(x = ExptDays, y = MyDensities, xlab='Experimental timepoints (days)', ylab='M. chamaeleon abundance (cells/mL)', las=1, ylim = c(0, 1.5 * max(MyDensities,na.rm=TRUE)), main= "M. chamaeleon abundance over time") 
+lines(x = exp.tmpts, y = exp.simu,col='blue') 
+lines(x = log.tmpts, y= log.simu,col='green') 
+legend("topleft", 
+  legend = c("logistic = green", "exponential = blue"))
+
+```
+ 
+/1 for your population size data  
+/1 for exponential fit  
+/1 for logistic model fit  
+/1 for correct legend  
+= /4 points total  
+
+
+ (2) Two figures showing class GROWTH RATE estimates by feeding treatment and light level. ONE figure should be for Hemiselmis-fed cultures, and the other figure should be for Rhodomonas-fed cultures. Each figure should have 6 boxplots (or bars, if you are using bargraphs), representing the combination of 3 light levels x 2 feeding treatments.
+
+
+```{r Class Data, fig.height=6, fig.width=10}
+setwd("/Users/Kerri/Downloads")
+
+
+# Put the spreadsheet in your working directory. Read the spreadsheet in with the read.csv function and name it 'ClassData' with variable assignment. 
+
+
+ClassData <- read.csv("EEMB179_279_W21_Lab2_GrowthData - 6PM Lab.csv", header = TRUE)
+
+glimpse(ClassData)
+
+
+par(mfrow= c(2,1))
+boxplot(r.est ~ Treatment*LightLevel, data=ClassData, subset = PreyType == "Rhodomonas salina", ylab = "Estimated Growth Rates", xlab= "Treatment x Light Level", main= "Average estimated growth rates of *Rhodomonas* fed bacteria", lim= c(0, 0.6))
+boxplot(r.est ~ Treatment*LightLevel, data=ClassData, subset = PreyType == "Hemiselmis pacifica", ylab = "Estimated Growth Rates", xlab= "Treatment x Light Level", main= "Average estimated growth rates of *Hemiselmis* fed bacteria", ylim= c(0 ,0.6) )
+
+```
+
+
+
+/1 if your graph is a bar or boxplot  
+/1 for correct response variable (growth rate)  
+/1 for categorical Hemiselmis-fed culture x-axis  
+/1 for categorical Rhodomonas-fed culture x-axis  
+= /4 points total per boxplot (total of 8)
+
+
+ (3) Two figures showing class CARRYING CAPACITY estimates by feeding treatment and light level. ONE figure should be for Hemiselmis-fed cultures, and the other figure should be for Rhodomonas-fed cultures. Each figure should have 6 boxplots (or bars, if you are using bargraphs), representing the combination of 3 light levels x 2 feeding treatments.
+ 
+```{r fig.height=6, fig.width=10}
+par(mfrow= c(2,1))
+boxplot(K.est ~ Treatment*LightLevel, data=ClassData, subset = PreyType == "Rhodomonas salina", ylab = "Estimated Carrying Capacity", xlab= "Treatment x Light Level", main= "Average estimated carrying capacity of *Rhodomonas* fed bacteria", ylim = c(0, 9000))
+boxplot(K.est ~ Treatment*LightLevel, data=ClassData, subset = PreyType == "Hemiselmis pacifica", ylab = "Estimated Carrying Capacity", xlab= "Treatment x Light Level", main= " Average estimated carrying capacity of *Hemiselmis* fed bacteria", ylim = c(0, 9000))
+```
+
+/1 if your graph is a bar or boxplot  
+/1 for correct response variable (carrying capacity)  
+/1 for categorical Hemiselmis-fed culture x-axis  
+/1 for categorical Rhodomonas-fed culture x-axis   
+= /4 points per boxplot (total of 8) 
+
+
+Comment on the following:
+ (4) Which of your model runs 'fit' your empirical data best? Why? What discrepancies were there, and what might improve the model fit? 
+
+ While both my logistic model and exponential model tracked for the first four data points, by the end of the experiment the logistic model predicts the abundance of M.chamaeleon much better than the exponential model. This is because microbial growth curves have four very distinct phases: lag, log, stationary, and death phase. By Day 9, the population has reached the stationary phase, at or close to a carrying capacity. At this point, the exponential model fails to predict the decrease in resources and increase in density of the population of M. chamaeleon, thus it continues to extend exponentially above carrying capacity. The logistic model takes into account the carrying capacity of M.chamaeleon, and thus begins to level off around the carrying capacity. The actual experimental population overshoots the carrying capacity of the logistic model and then falls below it. Extending the experiment out further in time may show the experimental population exhibiting some sort of oscillation around this carrying capacity. One discrepancy of the model is that the Carrying capacity is estimated using the maximum call/mL value of one line of data. Ideally, this number would be determined by averaging the maximum values of multiple replicates. Also, the cell counts were only taken every other day after the first 3 days of the experiment, so the population could reach its maximum value between sampling efforts. Increased replicates and smaller intervals between data collection efforts may improve the model fit.
+ 
+
+  /1 point for model fit
+  /1 point for explanation
+  /1 point for discrepancies
+  /1 point for adjustments to improve model fit
+ = /4 points
+ 
+ (5) Compare and contrast the different species in terms of their growth rates and carrying capacities. What are some possible explanations for differences that you observed?
+ 
+ Growth rates ofthe *Rhodomonas* fed populations were on average large than the *Hemiselmis* fed populations independent of light level. For every given light level and prey species combination, the fed populations had higher average growth rates than the starved populations. This makes sense because organisms reuire three things in order to grow, an energy source, a carbon source, and a source of elcetrons. In the fed population the prey species and media provide all three of these, and eventually *M. chamaeleon* can get its energy from light using the stolen chloroplasts.  
+ 
+  By adjusting the y-axis of the graphs it is very clear that the estimated carrying capacity of *Rhodomonas* fed bacteria were much higher than that of the *Hemiselmis* fed bacteria. This indicates that the *Rhodomonas* fed bacteria have more efficient resource use. This could be because the carbon in the prey source is more bioavailable or because the chloroplasts of the prey source are more easily incorported or have more favirable accessory pigments, all of which reduce maintainance energy reuirements and free up more energy for growt.
+ 
+ 
+ /2 points for comparison and contrast
+ /2 points for explanations that integrate the biology or ecology of these organisms
+ = /4 points
+ 
+Total = /28
+
+
+
+
+
